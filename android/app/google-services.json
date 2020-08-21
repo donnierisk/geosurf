@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "252660602065",
+    "firebase_url": "https://geosurf-9543b.firebaseio.com",
+    "project_id": "geosurf-9543b",
+    "storage_bucket": "geosurf-9543b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:252660602065:android:89355f9ef54fc7a83421f0",
+        "android_client_info": {
+          "package_name": "com.example.geosurf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "252660602065-c7f9bsk3ms531enr9srhf0uckni7bm41.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8p5Fsb9oO1du9eBvevVmt7oyBV66h4YQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "252660602065-c7f9bsk3ms531enr9srhf0uckni7bm41.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
