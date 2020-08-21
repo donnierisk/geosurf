@@ -8,7 +8,8 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:location_permissions/location_permissions.dart';
 import 'package:firebase_core/firebase_core.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 
 void main() => runApp(MaterialApp(home: App()));
 
@@ -32,48 +33,7 @@ class App extends StatelessWidget {
                   backgroundColor: Colors.lightGreen[500],
                   centerTitle: true),
               body: Center(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: <Widget>[
-                      Expanded(
-                        child: Container(
-                          width: 200,
-                          padding: EdgeInsets.all(20),
-                          margin: EdgeInsets.fromLTRB(0, 100, 0, 10),
-                          color: Colors.brown[500],
-                          alignment: Alignment.center,
-                          child: Text("Hiking",
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.fromLTRB(0, 10, 0, 100),
-                          width: 200,
-                          padding: EdgeInsets.all(20),
-                          color: Colors.blue[400],
-                          alignment: Alignment.center,
-                          child: Location(),
-                        ),
-                      ),
-                      Expanded(
-                        child: RatingBar(
-                          initialRating: 3,
-                          minRating: 1,
-                          direction: Axis.horizontal,
-                          allowHalfRating: true,
-                          itemCount: 5,
-                          itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
-                          itemBuilder: (context, _) => Icon(
-                            Icons.star,
-                            color: Colors.amber,
-                          ),
-                          onRatingUpdate: (rating) {
-                            print(rating);
-                          },
-                        ),
-                      ),
-                    ]),
+                child: Location(),
               ),
               backgroundColor: Colors.lightGreen[300],
               floatingActionButton: FloatingActionButton(
@@ -96,9 +56,12 @@ class Location extends StatefulWidget {
 
 class _LocationState extends State<Location> {
   bool _locationRetrieved = false;
-  String _result = "";
+  double _rating = 0.0;
 
-  Future<http.Response> fetchWeather() async {
+  CollectionReference sessions =
+      FirebaseFirestore.instance.collection('sessions');
+
+  void fetchWeather() async {
     GeolocationStatus locationsPermissions =
         await Geolocator().checkGeolocationPermissionStatus();
     if (locationsPermissions == GeolocationStatus.denied) {
@@ -115,33 +78,75 @@ class _LocationState extends State<Location> {
     } else {
       Position position = await Geolocator()
           .getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      print(position);
-      print("LOCATION IS ENABLED WEO");
-      return http.get(
+
+      var weatherData = await http.get(
           'http://api.openweathermap.org/data/2.5/weather?q=johannesburg&appid=3532bb18cbc62c9b858fe06cec8b2d4e');
+      this.addSession(position, weatherData.body);
     }
+  }
+
+  void addSession(Position pos, weatherData) {
+    // Call the user's CollectionReference to add a new user
+    sessions
+        .add({
+          'latitude:': pos.latitude,
+          'longitude:': pos.longitude,
+          'weatherData': weatherData,
+          'rating': _rating
+        })
+        .then((value) => print("Session data Added"))
+        .catchError((error) => print("Failed to add session data: $error"));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        children: [
-          RaisedButton(
-              child: Text("Surfing"),
-              onPressed: () {
-                fetchWeather().then((response) {
-                  setState(() {
-                    _locationRetrieved = true;
-                    _result = response.body;
-                    print(response.body);
-                  });
-                });
-              }),
-          Text(_result)
-        ],
-      ),
-    );
+    return Center(
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+          Expanded(
+            child: Container(
+              width: 200,
+              padding: EdgeInsets.all(20),
+              margin: EdgeInsets.fromLTRB(0, 100, 0, 10),
+              color: Colors.brown[500],
+              alignment: Alignment.center,
+              child: Text("Hiking", style: TextStyle(color: Colors.white)),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(0, 10, 0, 100),
+              width: 200,
+              padding: EdgeInsets.all(20),
+              color: Colors.blue[400],
+              alignment: Alignment.center,
+              child: RaisedButton(
+                  child: Text("Surfing"),
+                  onPressed: () {
+                    fetchWeather();
+                  }),
+            ),
+          ),
+          Expanded(
+              child: RatingBar(
+            initialRating: 3,
+            minRating: 1,
+            direction: Axis.horizontal,
+            allowHalfRating: true,
+            itemCount: 5,
+            itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
+            itemBuilder: (context, _) => Icon(
+              Icons.star,
+              color: Colors.amber,
+            ),
+            onRatingUpdate: (rating) {
+              setState(() {
+                _rating = rating;
+              });
+            },
+          ))
+        ]));
   }
 }
 
