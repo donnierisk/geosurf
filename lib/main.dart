@@ -9,7 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:location_permissions/location_permissions.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() => runApp(MaterialApp(home: App()));
 
@@ -49,6 +49,22 @@ class App extends StatelessWidget {
   }
 }
 
+Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
+  if (message.containsKey('data')) {
+    // Handle data message
+    final dynamic data = message['data'];
+    print(data);
+  }
+
+  if (message.containsKey('notification')) {
+    // Handle notification message
+    final dynamic notification = message['notification'];
+    print(notification);
+  }
+
+  // Or do other work.
+}
+
 class Location extends StatefulWidget {
   @override
   _LocationState createState() => _LocationState();
@@ -57,9 +73,36 @@ class Location extends StatefulWidget {
 class _LocationState extends State<Location> {
   bool _locationRetrieved = false;
   double _rating = 0.0;
-
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   CollectionReference sessions =
       FirebaseFirestore.instance.collection('sessions');
+
+  @override
+  void initState() {
+    super.initState();
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+      },
+      onBackgroundMessage: myBackgroundMessageHandler,
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
+    _firebaseMessaging.requestNotificationPermissions(
+        const IosNotificationSettings(
+            sound: true, badge: true, alert: true, provisional: true));
+    _firebaseMessaging.onIosSettingsRegistered
+        .listen((IosNotificationSettings settings) {
+      print("Settings registered: $settings");
+    });
+    _firebaseMessaging.getToken().then((String token) {
+      assert(token != null);
+    });
+  }
 
   void fetchWeather() async {
     GeolocationStatus locationsPermissions =
